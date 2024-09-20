@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f0f0f1;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #chatbox {
+            width: 80%; /* Set width to 80% of the page */
+            max-width: 1200px; /* Optional: set a maximum width for larger screens */
+            height: 500px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #messages {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 8px;
+            border-radius: 18px;
+            padding: 10px 15px;
+            max-width: 80%;
+        }
+        .user {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            margin-right: 10px;
+        }
+        .bot {
+            background-color: #e5e5ea;
+            align-self: flex-start;
+            margin-left: 10px;
+        }
+        /* Chat bubble loading animation */
+        .typing {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-left: 10px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #b3b3b3;
+            border-radius: 50%;
+            animation: typing 1s infinite;
+        }
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        #input-area {
+            border-top: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 15px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+        #send-button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            border: none;
+            background-color: #007aff;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0051a8;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const messages = document.getElementById('messages');
+            const userInput = inputField.value;
+
+            if (userInput.trim() === '') return;
+
+            // Append user message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user';
+            userDiv.textContent = `Me: ${userInput}`;
+            messages.appendChild(userDiv);
+
+            // Clear the input field
+            inputField.value = '';
+
+            // Create and show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing';
+            typingDiv.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            messages.appendChild(typingDiv);
+            messages.scrollTop = messages.scrollHeight;  // Scroll to the bottom
+
+            // Simulate backend request
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: userInput })
+            });
+
+            // Remove typing indicator when response is received
+            messages.removeChild(typingDiv);
+
+            // Append bot message
+            const data = await response.json();
+            const botDiv = document.createElement('div');
+            botDiv.className = 'message bot';
+            botDiv.textContent = `Bot: ${data.response}`;
+            messages.appendChild(botDiv);
+            messages.scrollTop = messages.scrollHeight;  // Scroll to the bottom
+        }
+
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+
+        // Add event listener for Enter key press
+        document.getElementById('user-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
