@@ -29,8 +29,12 @@ def generate():
         return jsonify({"error": "Model request failed"}), response.status_code
 
     # Parse the response from the API
-    generated_text = response.json().get("generated_text", "")
-    
+    try:
+        # Extract generated text from the response
+        generated_text = response.json()[0].get("generated_text", "")
+    except (KeyError, IndexError):
+        return jsonify({"error": "Unexpected response format from model"}), 500
+
     return jsonify({"response": generated_text})
 
 # if __name__ == "__main__":
@@ -38,4 +42,3 @@ def generate():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
-
