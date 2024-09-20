@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 # Hugging Face API information
-model_endpoint = "https://api-inference.huggingface.co/models/huggingjallah/libspeechmodel"  # Replace with your model
+model_endpoint = "https://api-inference.huggingface.co/models/libspeechmodel"  # Replace with your model
 api_token = "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"  # Replace with your Hugging Face API token
 headers = {"Authorization": f"Bearer {api_token}"}
 
