@@ -1,17 +1,12 @@
 from flask import Flask, request, jsonify, send_from_directory
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import os
+import requests
 
 app = Flask(__name__)
 
-# Load the fine-tuned model and tokenizer
-model_name = "finetunedmodel2"  # Path to your fine-tuned model
-tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-model = GPT2LMHeadModel.from_pretrained(model_name)
-
-# Set padding token if not already set
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
+# Hugging Face API information
+model_endpoint = "https://api-inference.huggingface.co/models/huggingjallah/libspeechmodel"  # Replace with your model
+api_token = "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"  # Replace with your Hugging Face API token
+headers = {"Authorization": f"Bearer {api_token}"}
 
 @app.route('/')
 def index():
@@ -23,26 +18,19 @@ def generate():
     if not user_input:
         return jsonify({"error": "No prompt provided"}), 400
 
-    inputs = tokenizer.encode(user_input, return_tensors='pt')
+    # Payload to send to the Hugging Face model API
+    payload = {"inputs": user_input}
     
+    # Send POST request to Hugging Face Inference API
+    response = requests.post(model_endpoint, headers=headers, json=payload)
+    
+    if response.status_code != 200:
+        return jsonify({"error": "Model request failed"}), response.status_code
 
-         # Generate the attention mask
-    attention_mask = (inputs != tokenizer.pad_token_id).long()
-    max_length=1000
-    # Generate the text
-    output = model.generate(
-        inputs,
-        max_length=max_length,
-        num_return_sequences=1,
-        do_sample=True,
-        attention_mask=attention_mask,
-        pad_token_id=tokenizer.eos_token_id,
-        eos_token_id=tokenizer.eos_token_id
-    )
-
-    response = tokenizer.decode(output[0], skip_special_tokens=True)
-
-    return jsonify({"response": response})
+    # Parse the response from the API
+    generated_text = response.json().get("generated_text", "")
+    
+    return jsonify({"response": generated_text})
 
 if __name__ == "__main__":
     app.run(debug=True)
